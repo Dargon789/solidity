@@ -6,6 +6,7 @@ Language Features:
 
 Compiler Features:
  * Error Reporting: Errors reported during code generation now point at the location of the contract when more fine-grained location is not available.
+ * ethdebug: Experimental support for instructions and source locations.
  * EVM: Support for the EVM version "Osaka".
  * EVM Assembly Import: Allow enabling opcode-based optimizer.
  * General: The experimental EOF backend implements a subset of EOF sufficient to compile arbitrary high-level Solidity syntax via IR with optimization enabled.
