@@ -7,6 +7,7 @@ Compiler Features:
 
 
 Bugfixes:
+* SMTChecker: Fix incorrect analysis when only a subset of contracts is selected with `--model-checker-contracts`.
 
 
 ### 0.8.29 (2025-03-12)

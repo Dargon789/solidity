@@ -1092,19 +1092,24 @@ void SMTEncoder::visitPublicGetter(FunctionCall const& _funCall)
 	}
 }
 
-bool SMTEncoder::shouldAnalyze(SourceUnit const& _source) const
+bool SMTEncoder::shouldEncode(ContractDefinition const& _contract) const
+{
+	return _contract.canBeDeployed();
+}
+
+bool SMTEncoder::shouldAnalyzeVerificationTargetsFor(SourceUnit const& _source) const
 {
 	return m_settings.contracts.isDefault() ||
 		m_settings.contracts.has(*_source.annotation().path);
 }
 
-bool SMTEncoder::shouldAnalyze(ContractDefinition const& _contract) const
+bool SMTEncoder::shouldAnalyzeVerificationTargetsFor(ContractDefinition const& _contract) const
 {
-	if (!_contract.canBeDeployed())
+	if (!shouldEncode(_contract))
 		return false;
 
 	return m_settings.contracts.isDefault() ||
-		m_settings.contracts.has(_contract.sourceUnitName());
+		m_settings.contracts.has(_contract.sourceUnitName(), _contract.name());
 }
 
 void SMTEncoder::visitTypeConversion(FunctionCall const& _funCall)

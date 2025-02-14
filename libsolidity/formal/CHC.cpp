@@ -89,7 +89,7 @@ void CHC::analyze(SourceUnit const& _source)
 			" If you wish to use Eldarica, please enable Eldarica only."
 		);
 
-	if (!shouldAnalyze(_source))
+	if (!shouldAnalyzeVerificationTargetsFor(_source))
 		return;
 
 	resetSourceAnalysis();
@@ -131,7 +131,7 @@ std::vector<std::string> CHC::unhandledQueries() const
 
 bool CHC::visit(ContractDefinition const& _contract)
 {
-	if (!shouldAnalyze(_contract))
+	if (!shouldEncode(_contract))
 		return false;
 
 	// Raises UnimplementedFeatureError in the presence of transient storage variables
@@ -152,7 +152,7 @@ bool CHC::visit(ContractDefinition const& _contract)
 
 void CHC::endVisit(ContractDefinition const& _contract)
 {
-	if (!shouldAnalyze(_contract))
+	if (!shouldEncode(_contract))
 		return;
 
 	for (auto base: _contract.annotation().linearizedBaseContracts)
@@ -239,15 +239,14 @@ void CHC::endVisit(ContractDefinition const& _contract)
 	setCurrentBlock(*m_constructorSummaries.at(&_contract));
 
 	solAssert(&_contract == m_currentContract, "");
-	if (shouldAnalyze(_contract))
-	{
-		auto constructor = _contract.constructor();
-		auto txConstraints = state().txTypeConstraints();
-		if (!constructor || !constructor->isPayable())
-			txConstraints = txConstraints && state().txNonPayableConstraint();
+	smtAssert(shouldEncode(_contract));
+	auto constructor = _contract.constructor();
+	auto txConstraints = state().txTypeConstraints();
+	if (!constructor || !constructor->isPayable())
+		txConstraints = txConstraints && state().txNonPayableConstraint();
+	connectBlocks(m_currentBlock, interface(), txConstraints && errorFlag().currentValue() == 0);
+	if (shouldAnalyzeVerificationTargetsFor(_contract))
 		m_queryPlaceholders[&_contract].push_back({txConstraints, errorFlag().currentValue(), m_currentBlock});
-		connectBlocks(m_currentBlock, interface(), txConstraints && errorFlag().currentValue() == 0);
-	}
 
 	solAssert(m_scopes.back() == &_contract, "");
 	m_scopes.pop_back();
@@ -338,7 +337,7 @@ void CHC::endVisit(FunctionDefinition const& _function)
 		!_function.isConstructor() &&
 		_function.isPublic() &&
 		contractFunctions(*m_currentContract).count(&_function) &&
-		shouldAnalyze(*m_currentContract)
+		shouldEncode(*m_currentContract)
 	)
 	{
 		defineExternalFunctionInterface(_function, *m_currentContract);
@@ -349,8 +348,9 @@ void CHC::endVisit(FunctionDefinition const& _function)
 		auto ifacePre = smt::interfacePre(*m_interfaces.at(m_currentContract), *m_currentContract, m_context);
 		auto sum = externalSummary(_function);
 
-		m_queryPlaceholders[&_function].push_back({sum, errorFlag().currentValue(), ifacePre});
 		connectBlocks(ifacePre, interface(), sum && errorFlag().currentValue() == 0);
+		if (shouldAnalyzeVerificationTargetsFor(*m_currentContract))
+			m_queryPlaceholders[&_function].push_back({sum, errorFlag().currentValue(), ifacePre});
 	}
 
 	m_currentFunction = nullptr;

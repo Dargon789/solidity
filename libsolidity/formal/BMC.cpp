@@ -1068,7 +1068,7 @@ void BMC::addVerificationTarget(
 	Expression const* _expression
 )
 {
-	if (!m_settings.targets.has(_type) || (m_currentContract && !shouldAnalyze(*m_currentContract)))
+	if (!m_settings.targets.has(_type) || (m_currentContract && !shouldAnalyzeVerificationTargetsFor(*m_currentContract)))
 		return;
 
 	BMCVerificationTarget target{
