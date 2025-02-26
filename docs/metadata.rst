@@ -124,11 +124,13 @@ explanatory purposes.
           "version": 1 // NatSpec version
         }
       },
-      // Required: Compiler settings. Reflects the settings in the JSON input during compilation.
-      // Check the documentation of standard JSON input's "settings" field
+      // Required: Compiler settings. 
+      // Reflects the settings in the JSON input during compilation, except the 
+      // "compilationTarget" and the "libraries" fields. Check each field for details.
+      // See the standard JSON input's "settings" docs for the rest.
       "settings": {
         // Required for Solidity: File path and the name of the contract or library this
-        // metadata is created for.
+        // metadata is created for. Not a valid field in the standard JSON input settings.
         "compilationTarget": {
           "myDirectory/myFile.sol": "MyContract"
         },
@@ -137,8 +139,11 @@ explanatory purposes.
         // Optional: Only present if not null.
         "eofVersion": 1,
         // Required for Solidity: Addresses for libraries used.
+        // Note that metadata has a different format for "libraries" field than the standard JSON input.
+        // metadata format = { "MyLib.sol:MyLib": "0x123123..." }
+        // standard JSON input format = { "MyLib.sol": { "MyLib": "0x123123..." } }
         "libraries": {
-          "MyLib": "0x123123..."
+          "MyLib.sol:MyLib": "0x123123..."
         },
         "metadata": {
           // Reflects the setting used in the input json, defaults to "true"
