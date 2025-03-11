@@ -27,9 +27,9 @@ The ``base-slot-expression`` must be an :ref:`integer literal<rational_literals>
 that can be evaluated at compilation time and yields a value in the range of ``uint256``.
 
 A custom layout cannot make contract's storage "wrap around".
-If the selected base slot would push the statically-sized variables past the end of storage,
+If the selected base slot would push the static variables past the end of storage,
 the compiler will issue an error.
-Note that the data areas of dynamically-sized variables are not affected by this check because
+Note that the data areas of dynamic arrays and mappings are not affected by this check because
 their layout is not linear.
 Regardless of the base slot used, their locations are calculated in a way that always puts them
 within the range of ``uint256`` and their sizes are not known at compilation time.
