@@ -353,7 +353,7 @@ Input Description
             }
           }
         },
-        // Version of the EVM to compile for.
+        // Version of the EVM to compile for (optional).
         // Affects type checking and code generation. Can be homestead,
         // tangerineWhistle, spuriousDragon, byzantium, constantinople,
         // petersburg, istanbul, berlin, london, paris, shanghai, cancun (default), prague (experimental) or osaka (experimental).
