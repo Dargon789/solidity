@@ -34,14 +34,16 @@ by the above rules, state variables from different contracts do share the same s
 The elements of structs and arrays are stored after each other, just as if they were given
 as individual values.
 
-If a contract specifies a :ref:`custom storage layout<custom-storage-layout>`, the slots which
-the state variables occupy are shifted according the value defined as the layout base.
+If a contract specifies a :ref:`custom storage layout<custom-storage-layout>`, the slots assigned
+to static storage variables are shifted according the value defined as the layout base.
+Locations of dynamic arrays and mappings are also indirectly affected by this due to shifting
+of the static slots they are based on.
 The custom layout is specified in the most derived contract and, following the order explained
 above, starting from the most base-ward contract's variables, all storage slots are adjusted.
 
 In the following example, contract ``C`` inherits from contracts ``A`` and ``B`` and also
 specifies a custom storage base slot.
-The result is that all variable storage slots of the inheritance tree will be adjusted according to
+The result is that all storage variable slots of the inheritance tree are adjusted according to
 the value specified by ``C``.
 
 .. code-block:: solidity
@@ -74,19 +76,16 @@ the value specified by ``C``.
     }
 
 In the example, the storage layout starts with the inherited
-state variable ``x`` stored at the specified base slot ``42``.
+state variable ``x`` stored directly inside the base slot (slot ``42``).
 Transient, constant and immutable variables are stored in separate
-locations and, thus, ``y``, ``w`` and ``z``don't interfere with the layout.
-The next variables ``i`` and ``j`` need 2 bytes each and can be packed in
-the next slot ``43``, at offsets ``0`` and ``2`` respectively.
-Since ``s`` is a struct, its two members are packed contiguously, demanding
-both 5 bytes.
-Even though they still could fit in slot ``43``, structs and static arrays
-always start a new slot as well as any other item after them.
-So, according to that ``s`` is placed at slot ``44`` and the next variable,
-``k`` at slot ``45``.
-Then, variable ``register`` which is an array of 10 positions, starts at slot ``46``
-and demands 80 bytes. Finally, variable, ``flag``, start at slot ``47``, because,
+locations and, thus, ``y``, ``w`` and ``z`` have no effect on the storage layout.
+The next two variables, ``i`` and ``j``, need 2 bytes each and can be packed together into
+slot ``43``, at offsets ``0`` and ``2`` respectively.
+Since ``s`` is a struct, its two members are packed contiguously, each taking up 5 bytes.
+Even though they both would still fit in slot ``43``, structs and arrays always start a new slot.
+Therefore, ``s`` is placed in slot ``44`` and the next variable, ``k``, in slot ``45``.
+Then, variable ``register`` which is an array of 10 items, gets into slot ``46`` and takes up 80 bytes.
+Finally, variable ``flag`` ends up in slot ``47``, because,
 as explained before, variables after structs and arrays always start a new slot.
 
 .. warning::
