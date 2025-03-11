@@ -25,32 +25,27 @@ using namespace solidity::evmasm::ethdebug;
 namespace
 {
 
-Json programInstructions(Assembly const* _assembly, LinkerObject const& _linkerObject, unsigned _sourceId)
+Json programInstructions(Assembly const& _assembly, LinkerObject const& _linkerObject, unsigned _sourceId)
 {
-	// e.g. interfaces don't have a valid assembly object.
-	if (_assembly)
-	{
-		solUnimplementedAssert(_assembly->eofVersion() == std::nullopt, "ethdebug does not yet support EOF.");
-		solUnimplementedAssert(_assembly->codeSections().size() == 1, "ethdebug does not yet support multiple code-sections.");
-		for (auto const& instruction: _assembly->codeSections()[0].items)
-			solUnimplementedAssert(instruction.type() != VerbatimBytecode, "Verbatim bytecode is currently not supported by ethdebug.");
-	}
+	solUnimplementedAssert(_assembly.eofVersion() == std::nullopt, "ethdebug does not yet support EOF.");
+	solUnimplementedAssert(_assembly.codeSections().size() == 1, "ethdebug does not yet support multiple code-sections.");
+	for (auto const& instruction: _assembly.codeSections()[0].items)
+		solUnimplementedAssert(instruction.type() != VerbatimBytecode, "Verbatim bytecode is currently not supported by ethdebug.");
 
 	solAssert(_linkerObject.codeSectionLocations.size() == 1);
 	solAssert(_linkerObject.codeSectionLocations[0].end <= _linkerObject.bytecode.size());
 	Json instructions = Json::array();
 	for (size_t i = 0; i < _linkerObject.codeSectionLocations[0].instructionLocations.size(); ++i)
 	{
-		solAssert(_assembly);
 		LinkerObject::InstructionLocation currentInstruction = _linkerObject.codeSectionLocations[0].instructionLocations[i];
 		size_t start = currentInstruction.start;
 		size_t end = currentInstruction.end;
 		size_t assemblyItemIndex = currentInstruction.assemblyItemIndex;
 		solAssert(end <= _linkerObject.bytecode.size());
 		solAssert(start < end);
-		solAssert(assemblyItemIndex < _assembly->codeSections().at(0).items.size());
+		solAssert(assemblyItemIndex < _assembly.codeSections().at(0).items.size());
 		Json operation = Json::object();
-		operation["mnemonic"] = instructionInfo(static_cast<Instruction>(_linkerObject.bytecode[start]), _assembly->evmVersion()).name;
+		operation["mnemonic"] = instructionInfo(static_cast<Instruction>(_linkerObject.bytecode[start]), _assembly.evmVersion()).name;
 		static size_t constexpr instructionSize = 1;
 		if (start + instructionSize < end)
 		{
@@ -61,7 +56,7 @@ Json programInstructions(Assembly const* _assembly, LinkerObject const& _linkerO
 			solAssert(!argumentData.empty());
 			operation["arguments"] = Json::array({util::toHex(argumentData, util::HexPrefix::Add)});
 		}
-		langutil::SourceLocation const& location = _assembly->codeSections().at(0).items.at(assemblyItemIndex).location();
+		langutil::SourceLocation const& location = _assembly.codeSections().at(0).items.at(assemblyItemIndex).location();
 		Json instruction = Json::object();
 		instruction["offset"] = start;
 		instruction["operation"] = operation;
@@ -90,8 +85,11 @@ Json ethdebug::program(std::string_view _name, unsigned _sourceId, Assembly cons
 	result["contract"]["definition"] = Json::object();
 	result["contract"]["definition"]["source"] = Json::object();
 	result["contract"]["definition"]["source"]["id"] = _sourceId;
-	result["environment"] = (!_assembly || _assembly->isCreation()) ? "create" : "call";
-	result["instructions"] = programInstructions(_assembly, _linkerObject, _sourceId);
+	if (_assembly)
+	{
+		result["environment"] = _assembly->isCreation() ? "create" : "call";
+		result["instructions"] = programInstructions(*_assembly, _linkerObject, _sourceId);
+	}
 	return result;
 }
 
