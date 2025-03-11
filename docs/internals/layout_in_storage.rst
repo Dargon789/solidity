@@ -88,6 +88,38 @@ Then, variable ``register`` which is an array of 10 items, gets into slot ``46``
 Finally, variable ``flag`` ends up in slot ``47``, because,
 as explained before, variables after structs and arrays always start a new slot.
 
+Overall the storage and transient storage layouts of contract ``C`` can be illustrated as follows:
+
+- Storage:
+  ::
+
+      42 [xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
+      43 [                            jjii]
+      44 [                           baaaa]
+      45 [                               k]
+      46 [                      rrrrrrrrrr]
+      47 [                               f]
+
+- Transient storage:
+  ::
+
+      00 [yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy]
+
+Note that the storage specifier affects ``A`` and ``B`` only as a part of ``C``'s inheritance hierarchy.
+When deployed independently, their storage starts at ``0``:
+
+- Storage layout of ``A``:
+  ::
+
+      00 [xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
+
+- Storage layout of ``B``:
+  ::
+
+      00 [                            jjii]
+      01 [                           baaaa]
+      02 [                               k]
+
 .. warning::
     When using elements that are smaller than 32 bytes, your contract's gas usage may be higher.
     This is because the EVM operates on 32 bytes at a time. Therefore, if the element is smaller
