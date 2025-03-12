@@ -1,4 +1,4 @@
-### 0.8.29 (unreleased)
+### 0.8.29 (2025-03-12)
 
 Language Features:
  * Allow relocating contract storage to an arbitrary location.
