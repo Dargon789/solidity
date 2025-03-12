@@ -6,6 +6,7 @@
  - [ ] DockerHub account with push rights to the [``solc`` image](https://hub.docker.com/r/ethereum/solc).
  - [ ] Launchpad (Ubuntu One) account with a membership in the ["Ethereum" team](https://launchpad.net/~ethereum) and
        a gnupg key for your email in the ``ethereum.org`` domain (has to be version 1, gpg2 won't work).
+ - [ ] Ubuntu/Debian dependencies of the Docker script: ``docker-buildx``.
  - [ ] Ubuntu/Debian dependencies of the PPA scripts: ``devscripts``, ``debhelper``, ``dput``, ``git``, ``wget``, ``ca-certificates``.
  - [ ] [npm Registry](https://www.npmjs.com) account added as a collaborator for the [``solc`` package](https://www.npmjs.com/package/solc).
  - [ ] Access to the [solidity_lang Twitter account](https://twitter.com/solidity_lang).
@@ -79,6 +80,7 @@ At least a day before the release:
  - [ ] Update the version and the hash (``sha256sum solidity_$VERSION.tar.gz``) in the [``solidity`` formula in Homebrew core repository](https://github.com/Homebrew/homebrew-core/blob/master/Formula/s/solidity.rb).
 
 ### Docker
+ - [ ] Make sure ``docker-buildx`` is installed.
  - [ ] Run ``./scripts/docker_deploy_manual.sh v$VERSION``.
 
 ### PPA
