@@ -8,6 +8,7 @@ Compiler Features:
 
 Bugfixes:
 * SMTChecker: Fix incorrect analysis when only a subset of contracts is selected with `--model-checker-contracts`.
+* SMTChecker: Fix internal compiler error when string literal is used to initialize user-defined type based on fixed bytes.
 
 
 ### 0.8.29 (2025-03-12)
