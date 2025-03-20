@@ -45,6 +45,10 @@ class Object;
  * Yul dialect for EVM as a backend.
  * The main difference is that the builtin functions take an AbstractAssembly for the
  * code generation.
+ *
+ * Builtins are defined so that their handles stay compatible over different dialect flavors - be it with/without
+ * object access, with/without EOF, different versions. It may be, of course, that these builtins are no longer defined.
+ * The ones that _are_ defined, though, remain under the same handle.
  */
 class EVMDialect: public Dialect
 {
@@ -81,6 +85,8 @@ public:
 	AuxiliaryBuiltinHandles const& auxiliaryBuiltinHandles() const { return m_auxiliaryBuiltinHandles; }
 
 	static EVMDialect const& strictAssemblyForEVM(langutil::EVMVersion _evmVersion, std::optional<uint8_t> _eofVersion);
+	/// Builtins with and without object access are compatible, i.e., builtin handles without object access are not
+	/// invalidated and still point to the same function.
 	static EVMDialect const& strictAssemblyForEVMObjects(langutil::EVMVersion _evmVersion, std::optional<uint8_t> _eofVersion);
 
 	langutil::EVMVersion evmVersion() const { return m_evmVersion; }
@@ -91,6 +97,8 @@ public:
 
 	static size_t constexpr verbatimMaxInputSlots = 100;
 	static size_t constexpr verbatimMaxOutputSlots = 100;
+
+	std::set<std::string_view> builtinFunctionNames() const;
 
 protected:
 	static bool constexpr isVerbatimHandle(BuiltinHandle const& _handle) { return _handle.id < verbatimIDOffset; }
