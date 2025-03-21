@@ -523,7 +523,7 @@ size_t AsmAnalyzer::operator()(FunctionCall const& _funCall)
 								nativeLocationOf(arg),
 								fmt::format(
 									"Data name \"{}\" cannot be used as an argument of eofcreate/returncontract. "
-									"An object name is only acceptable.",
+									"Only an object name is acceptable.",
 									formattedLiteral
 								)
 							);
