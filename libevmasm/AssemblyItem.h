@@ -105,7 +105,6 @@ public:
 
 	explicit AssemblyItem(bytes _verbatimData, size_t _arguments, size_t _returnVariables):
 		m_type(VerbatimBytecode),
-		m_instruction{},
 		m_verbatimBytecode{{_arguments, _returnVariables, std::move(_verbatimData)}},
 		m_debugData{langutil::DebugData::create()}
 	{}
@@ -195,7 +194,7 @@ public:
 	/// @returns true if the item has m_instruction properly set.
 	bool hasInstruction() const
 	{
-		return
+		bool const shouldHaveInstruction =
 			m_type == Operation ||
 			m_type == EOFCreate ||
 			m_type == ReturnContract ||
@@ -206,12 +205,14 @@ public:
 			m_type == RetF ||
 			m_type == SwapN ||
 			m_type == DupN;
+		solAssert(shouldHaveInstruction == m_instruction.has_value());
+		return shouldHaveInstruction;
 	}
 	/// @returns the instruction of this item (only valid if hasInstruction returns true)
 	Instruction instruction() const
 	{
 		solAssert(hasInstruction());
-		return m_instruction;
+		return *m_instruction;
 	}
 
 	/// @returns true if the type and data of the items are equal.
@@ -323,7 +324,7 @@ private:
 	size_t opcodeCount() const noexcept;
 
 	AssemblyItemType m_type;
-	Instruction m_instruction; ///< Only valid if m_type == Operation
+	std::optional<Instruction> m_instruction; ///< Only valid for item types that represent a specific opcode
 	std::shared_ptr<u256> m_data; ///< Only valid if m_type != Operation
 	std::optional<FunctionSignature> m_functionSignature; ///< Only valid if m_type == CallF or JumpF
 	/// If m_type == VerbatimBytecode, this holds number of arguments, number of
