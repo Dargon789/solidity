@@ -929,8 +929,10 @@ void SMTEncoder::visitAddMulMod(FunctionCall const& _funCall)
 void SMTEncoder::visitWrapUnwrap(FunctionCall const& _funCall)
 {
 	auto const& args = _funCall.arguments();
-	solAssert(args.size() == 1, "");
-	defineExpr(_funCall, expr(*args.front()));
+	smtAssert(args.size() == 1, "Expected exactly one argument to wrap/unwrap");
+	auto const& funType = dynamic_cast<FunctionType const&>(*_funCall.expression().annotation().type);
+	auto const* argType = funType.parameterTypes().front();
+	defineExpr(_funCall, expr(*args.front(), argType));
 }
 
 void SMTEncoder::visitObjectCreation(FunctionCall const& _funCall)
