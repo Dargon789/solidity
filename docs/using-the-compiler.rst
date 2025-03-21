@@ -279,7 +279,7 @@ Input Description
       {
         // Optional: Stop compilation after the given stage. Currently only "parsing" is valid here
         "stopAfter": "parsing",
-        // Optional: Sorted list of remappings
+        // Optional: List of remappings
         "remappings": [ ":g=/dir" ],
         // Optional: Optimizer settings
         "optimizer": {
