@@ -465,9 +465,7 @@ std::optional<smtutil::Expression> CHCSmtLib2Interface::invariantsFromSolverResp
 			smtSolverInteractionRequire(isAtom(nameSortPair[0]), "Invalid format of CHC model");
 			SortPointer varSort = scopedParser.toSort(nameSortPair[1]);
 			scopedParser.addVariableDeclaration(asAtom(nameSortPair[0]), varSort);
-			// FIXME: Why Expression here?
-			Expression arg = scopedParser.toSMTUtilExpression(nameSortPair[0]);
-			predicateArgs.push_back(arg);
+			predicateArgs.push_back(scopedParser.toSMTUtilExpression(nameSortPair[0]));
 		}
 
 		auto parsedInterpretation = scopedParser.toSMTUtilExpression(interpretation);
@@ -479,6 +477,7 @@ std::optional<smtutil::Expression> CHCSmtLib2Interface::invariantsFromSolverResp
 			});
 
 		Expression predicate(asAtom(args[1]), predicateArgs, SortProvider::boolSort);
+		// FIXME: Why do we need to represent the predicate as Expression?
 		definitions.push_back(predicate == parsedInterpretation);
 	}
 	return Expression::mkAnd(std::move(definitions));
