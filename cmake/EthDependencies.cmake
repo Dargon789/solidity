@@ -49,8 +49,7 @@ if (NOT TARGET Boost::boost) # header only target
 	add_library(Boost::boost INTERFACE IMPORTED)
 	set_property(TARGET Boost::boost APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
 endif()
-get_property(LOCATION TARGET Boost::boost PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "Found Boost headers in ${LOCATION}")
+message(STATUS "Found Boost ${Boost_VERSION} headers in ${Boost_INCLUDE_DIRS}")
 
 foreach (BOOST_COMPONENT IN LISTS BOOST_COMPONENTS)
 	if (NOT TARGET Boost::${BOOST_COMPONENT})
