@@ -18,6 +18,8 @@
 
 #include <libevmasm/Ethdebug.h>
 
+#include <range/v3/algorithm/any_of.hpp>
+
 using namespace solidity;
 using namespace solidity::evmasm;
 using namespace solidity::evmasm::ethdebug;
@@ -25,25 +27,35 @@ using namespace solidity::evmasm::ethdebug;
 namespace
 {
 
-Json programInstructions(Assembly const& _assembly, LinkerObject const& _linkerObject, unsigned _sourceId)
+std::vector<Json> codeSectionInstructions(Assembly const& _assembly, LinkerObject const& _linkerObject, unsigned _sourceId, size_t const _codeSectionIndex)
 {
-	solUnimplementedAssert(_assembly.eofVersion() == std::nullopt, "ethdebug does not yet support EOF.");
-	solUnimplementedAssert(_assembly.codeSections().size() == 1, "ethdebug does not yet support multiple code-sections.");
-	for (auto const& instruction: _assembly.codeSections()[0].items)
-		solUnimplementedAssert(instruction.type() != VerbatimBytecode, "Verbatim bytecode is currently not supported by ethdebug.");
+	solAssert(_codeSectionIndex < _linkerObject.codeSectionLocations.size());
+	solAssert(_codeSectionIndex < _assembly.codeSections().size());
+	auto const& locations = _linkerObject.codeSectionLocations[_codeSectionIndex];
+	auto const& codeSection = _assembly.codeSections().at(_codeSectionIndex);
 
-	solAssert(_linkerObject.codeSectionLocations.size() == 1);
-	solAssert(_linkerObject.codeSectionLocations[0].end <= _linkerObject.bytecode.size());
-	Json instructions = Json::array();
-	for (size_t i = 0; i < _linkerObject.codeSectionLocations[0].instructionLocations.size(); ++i)
+	std::vector<Json> instructions;
+	instructions.reserve(codeSection.items.size());
+
+	bool const codeSectionContainsVerbatim = ranges::any_of(
+		codeSection.items,
+		[](auto const& _instruction) { return _instruction.type() == VerbatimBytecode; }
+	);
+	solUnimplementedAssert(!codeSectionContainsVerbatim, "Verbatim bytecode is currently not supported by ethdebug.");
+
+	for (auto const& currentInstruction: locations.instructionLocations)
 	{
-		LinkerObject::InstructionLocation currentInstruction = _linkerObject.codeSectionLocations[0].instructionLocations[i];
-		size_t start = currentInstruction.start;
-		size_t end = currentInstruction.end;
-		size_t assemblyItemIndex = currentInstruction.assemblyItemIndex;
+		size_t const start = currentInstruction.start;
+		size_t const end = currentInstruction.end;
+
+		// some instructions do not contribute to the bytecode
+		if (start == end)
+			continue;
+
+		size_t const assemblyItemIndex = currentInstruction.assemblyItemIndex;
 		solAssert(end <= _linkerObject.bytecode.size());
 		solAssert(start < end);
-		solAssert(assemblyItemIndex < _assembly.codeSections().at(0).items.size());
+		solAssert(assemblyItemIndex < codeSection.items.size());
 		Json operation = Json::object();
 		operation["mnemonic"] = instructionInfo(static_cast<Instruction>(_linkerObject.bytecode[start]), _assembly.evmVersion()).name;
 		static size_t constexpr instructionSize = 1;
@@ -56,23 +68,38 @@ Json programInstructions(Assembly const& _assembly, LinkerObject const& _linkerO
 			solAssert(!argumentData.empty());
 			operation["arguments"] = Json::array({util::toHex(argumentData, util::HexPrefix::Add)});
 		}
-		langutil::SourceLocation const& location = _assembly.codeSections().at(0).items.at(assemblyItemIndex).location();
-		Json instruction = Json::object();
-		instruction["offset"] = start;
-		instruction["operation"] = operation;
-
-		instruction["context"] = Json::object();
-		instruction["context"]["code"] = Json::object();
-		instruction["context"]["code"]["source"] = Json::object();
-		instruction["context"]["code"]["source"]["id"] = static_cast<int>(_sourceId);
-
-		instruction["context"]["code"]["range"] = Json::object();
-		instruction["context"]["code"]["range"]["offset"] = location.start;
-		instruction["context"]["code"]["range"]["length"] = location.end - location.start;
-		instructions.emplace_back(instruction);
+		langutil::SourceLocation const& location = codeSection.items.at(assemblyItemIndex).location();
+		instructions.emplace_back(Json{
+			{ "offset", start },
+			{"operation", operation },
+			{
+				"context", {
+					"code", {
+						"source", {
+							{ "id", static_cast<int>(_sourceId) },
+						},
+						"range", {
+							{ "offset", location.start },
+							{ "length", location.end - location.start }
+						}
+					}
+				}
+			}
+		});
 	}
 
 	return instructions;
+}
+
+Json programInstructions(Assembly const& _assembly, LinkerObject const& _linkerObject, unsigned _sourceId)
+{
+	auto const numCodeSections = _assembly.codeSections().size();
+	solAssert(numCodeSections == _linkerObject.codeSectionLocations.size());
+
+	std::vector<Json> instructionInfo;
+	for (size_t codeSectionIndex = 0; codeSectionIndex < numCodeSections; ++codeSectionIndex)
+		instructionInfo += codeSectionInstructions(_assembly, _linkerObject, _sourceId, codeSectionIndex);
+	return instructionInfo;
 }
 
 } // anonymous namespace
