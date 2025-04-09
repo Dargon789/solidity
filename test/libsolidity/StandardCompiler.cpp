@@ -2231,9 +2231,12 @@ BOOST_DATA_TEST_CASE(ethdebug_output_instructions_smoketest, boost::unit_test::d
 		BOOST_REQUIRE(instruction.contains("offset"));
 		BOOST_REQUIRE(instruction.contains("operation"));
 		BOOST_REQUIRE(instruction["operation"].contains("mnemonic"));
-		BOOST_REQUIRE(instruction["context"]["code"]["range"].contains("length"));
-		BOOST_REQUIRE(instruction["context"]["code"]["range"].contains("offset"));
-		BOOST_REQUIRE(instruction["context"]["code"]["source"].contains("id"));
+		if (instruction.contains("context"))
+		{
+			BOOST_REQUIRE(instruction["context"]["code"]["range"].contains("length"));
+			BOOST_REQUIRE(instruction["context"]["code"]["range"].contains("offset"));
+			BOOST_REQUIRE(instruction["context"]["code"]["source"].contains("id"));
+		}
 		std::string mnemonic = instruction["operation"]["mnemonic"];
 		if (mnemonic.find("PUSH") != std::string::npos)
 		{

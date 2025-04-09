@@ -18,6 +18,8 @@
 
 #include <libevmasm/Ethdebug.h>
 
+#include <libevmasm/EthdebugSchema.h>
+
 #include <range/v3/algorithm/any_of.hpp>
 
 using namespace solidity;
@@ -27,14 +29,66 @@ using namespace solidity::evmasm::ethdebug;
 namespace
 {
 
-std::vector<Json> codeSectionInstructions(Assembly const& _assembly, LinkerObject const& _linkerObject, unsigned _sourceId, size_t const _codeSectionIndex)
+schema::program::Instruction::Operation instructionOperation(Assembly const& _assembly, LinkerObject const& _linkerObject, size_t const _start, size_t const _end)
+{
+	solAssert(_end <= _linkerObject.bytecode.size());
+	solAssert(_start < _end);
+	schema::program::Instruction::Operation operation;
+	operation.mnemonic = instructionInfo(static_cast<Instruction>(_linkerObject.bytecode[_start]), _assembly.evmVersion()).name;
+	static size_t constexpr instructionSize = 1;
+	if (_start + instructionSize < _end)
+	{
+		bytes const argumentData(
+			_linkerObject.bytecode.begin() + static_cast<std::ptrdiff_t>(_start) + instructionSize,
+			_linkerObject.bytecode.begin() + static_cast<std::ptrdiff_t>(_end)
+		);
+		solAssert(!argumentData.empty());
+		operation.arguments = {{schema::data::HexValue{argumentData}}};
+	}
+	return operation;
+}
+
+schema::materials::SourceRange::Range locationRange(langutil::SourceLocation const& _location)
+{
+	return {
+		.length = schema::data::Unsigned{_location.end - _location.start},
+		.offset = schema::data::Unsigned{_location.start}
+	};
+}
+
+schema::materials::Reference sourceReference(unsigned _sourceID)
+{
+	return {
+		.id = schema::materials::ID{_sourceID},
+		.type = std::nullopt
+	};
+}
+
+std::optional<schema::program::Context> instructionContext(Assembly::CodeSection const& _codeSection, size_t _assemblyItemIndex, unsigned _sourceID)
+{
+	solAssert(_assemblyItemIndex < _codeSection.items.size());
+	langutil::SourceLocation const& location = _codeSection.items.at(_assemblyItemIndex).location();
+	if (!location.isValid())
+		return std::nullopt;
+
+	return schema::program::Context{
+		schema::materials::SourceRange{
+			.source = sourceReference(_sourceID),
+			.range = locationRange(location)
+		},
+		std::nullopt,
+		std::nullopt
+	};
+}
+
+std::vector<schema::program::Instruction> codeSectionInstructions(Assembly const& _assembly, LinkerObject const& _linkerObject, unsigned const _sourceID, size_t const _codeSectionIndex)
 {
 	solAssert(_codeSectionIndex < _linkerObject.codeSectionLocations.size());
 	solAssert(_codeSectionIndex < _assembly.codeSections().size());
 	auto const& locations = _linkerObject.codeSectionLocations[_codeSectionIndex];
 	auto const& codeSection = _assembly.codeSections().at(_codeSectionIndex);
 
-	std::vector<Json> instructions;
+	std::vector<schema::program::Instruction> instructions;
 	instructions.reserve(codeSection.items.size());
 
 	bool const codeSectionContainsVerbatim = ranges::any_of(
@@ -52,72 +106,47 @@ std::vector<Json> codeSectionInstructions(Assembly const& _assembly, LinkerObjec
 		if (start == end)
 			continue;
 
-		size_t const assemblyItemIndex = currentInstruction.assemblyItemIndex;
-		solAssert(end <= _linkerObject.bytecode.size());
-		solAssert(start < end);
-		solAssert(assemblyItemIndex < codeSection.items.size());
-		Json operation = Json::object();
-		operation["mnemonic"] = instructionInfo(static_cast<Instruction>(_linkerObject.bytecode[start]), _assembly.evmVersion()).name;
-		static size_t constexpr instructionSize = 1;
-		if (start + instructionSize < end)
-		{
-			bytes const argumentData(
-				_linkerObject.bytecode.begin() + static_cast<std::ptrdiff_t>(start) + instructionSize,
-				_linkerObject.bytecode.begin() + static_cast<std::ptrdiff_t>(end)
-			);
-			solAssert(!argumentData.empty());
-			operation["arguments"] = Json::array({util::toHex(argumentData, util::HexPrefix::Add)});
-		}
-		langutil::SourceLocation const& location = codeSection.items.at(assemblyItemIndex).location();
-		instructions.emplace_back(Json{
-			{ "offset", start },
-			{"operation", operation },
-			{
-				"context", {
-					"code", {
-						"source", {
-							{ "id", static_cast<int>(_sourceId) },
-						},
-						"range", {
-							{ "offset", location.start },
-							{ "length", location.end - location.start }
-						}
-					}
-				}
-			}
+		instructions.emplace_back(schema::program::Instruction{
+			.offset = schema::data::Unsigned{start},
+			.operation = instructionOperation(_assembly, _linkerObject, start, end),
+			.context = instructionContext(codeSection, currentInstruction.assemblyItemIndex, _sourceID)
 		});
 	}
 
 	return instructions;
 }
 
-Json programInstructions(Assembly const& _assembly, LinkerObject const& _linkerObject, unsigned _sourceId)
+std::vector<schema::program::Instruction> programInstructions(Assembly const& _assembly, LinkerObject const& _linkerObject, unsigned const _sourceID)
 {
 	auto const numCodeSections = _assembly.codeSections().size();
 	solAssert(numCodeSections == _linkerObject.codeSectionLocations.size());
 
-	std::vector<Json> instructionInfo;
+	std::vector<schema::program::Instruction> instructionInfo;
 	for (size_t codeSectionIndex = 0; codeSectionIndex < numCodeSections; ++codeSectionIndex)
-		instructionInfo += codeSectionInstructions(_assembly, _linkerObject, _sourceId, codeSectionIndex);
+		instructionInfo += codeSectionInstructions(_assembly, _linkerObject, _sourceID, codeSectionIndex);
 	return instructionInfo;
 }
 
 } // anonymous namespace
 
-Json ethdebug::program(std::string_view _name, unsigned _sourceId, Assembly const& _assembly, LinkerObject const& _linkerObject)
+Json ethdebug::program(std::string_view _name, unsigned _sourceID, Assembly const& _assembly, LinkerObject const& _linkerObject)
 {
-	Json result = Json::object();
-	result["contract"] = Json::object();
-	result["contract"]["name"] = _name;
-	result["contract"]["definition"] = Json::object();
-	result["contract"]["definition"]["source"] = Json::object();
-	result["contract"]["definition"]["source"]["id"] = _sourceId;
-	if (_assembly)
-	{
-		result["environment"] = _assembly->isCreation() ? "create" : "call";
-		result["instructions"] = programInstructions(*_assembly, _linkerObject, _sourceId);
-	}
-	return result;
+	return schema::Program{
+		.compilation = std::nullopt,
+		.contract = {
+			.name = std::string{_name},
+			.definition = {
+				.source = {
+					.id = {_sourceID},
+					.type = std::nullopt
+				},
+				.range = std::nullopt
+			}
+		},
+		.environment = _assembly.isCreation() ? schema::Program::Environment::CREATE : schema::Program::Environment::CALL,
+		.context = std::nullopt,
+		.instructions = programInstructions(_assembly, _linkerObject, _sourceID)
+	};
 }
 
 Json ethdebug::resources(std::vector<std::string> const& _sources, std::string const& _version)
