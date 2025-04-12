@@ -77,7 +77,7 @@ Json programInstructions(Assembly const& _assembly, LinkerObject const& _linkerO
 
 } // anonymous namespace
 
-Json ethdebug::program(std::string_view _name, unsigned _sourceId, Assembly const* _assembly, LinkerObject const& _linkerObject)
+Json ethdebug::program(std::string_view _name, unsigned _sourceId, Assembly const& _assembly, LinkerObject const& _linkerObject)
 {
 	Json result = Json::object();
 	result["contract"] = Json::object();
