@@ -17,6 +17,8 @@
 
 #include <test/libevmasm/EVMAssemblyTest.h>
 
+#include <test/libevmasm/PlainAssemblyParser.h>
+
 #include <test/Common.h>
 
 #include <libevmasm/Disassemble.h>
@@ -39,6 +41,7 @@ using namespace solidity::langutil;
 using namespace solidity::util;
 
 std::vector<std::string> const EVMAssemblyTest::c_outputLabels = {
+	"InputAssemblyJSON",
 	"Assembly",
 	"Bytecode",
 	"Opcodes",
@@ -56,8 +59,12 @@ EVMAssemblyTest::EVMAssemblyTest(std::string const& _filename):
 	m_source = m_reader.source();
 	m_expectation = m_reader.simpleExpectations();
 
-	if (!_filename.ends_with(".asmjson"))
-		BOOST_THROW_EXCEPTION(std::runtime_error("Not an assembly test: \"" + _filename + "\". Allowed extensions: .asmjson."));
+	if (_filename.ends_with(".asmjson"))
+		m_assemblyFormat = AssemblyFormat::JSON;
+	else if (_filename.ends_with(".asm"))
+		m_assemblyFormat = AssemblyFormat::Plain;
+	else
+		BOOST_THROW_EXCEPTION(std::runtime_error("Not an assembly test: \"" + _filename + "\". Allowed extensions: .asm, .asmjson."));
 
 	m_selectedOutputs = m_reader.stringSetting("outputs", "Assembly,Bytecode,Opcodes,SourceMappings");
 	OptimisationPreset optimizationPreset = m_reader.enumSetting<OptimisationPreset>(
@@ -101,9 +108,23 @@ TestCase::TestResult EVMAssemblyTest::run(std::ostream& _stream, std::string con
 
 	evmAssemblyStack.selectDebugInfo(DebugInfoSelection::AllExceptExperimental());
 
+	std::string assemblyJSON;
+	switch (m_assemblyFormat)
+	{
+	case AssemblyFormat::JSON:
+		assemblyJSON = m_source;
+		break;
+	case AssemblyFormat::Plain:
+		assemblyJSON = jsonPrint(
+			PlainAssemblyParser{}.parse(m_reader.fileName().filename().string(), m_source),
+			{JsonFormat::Pretty, 4}
+		);
+		break;
+	}
+
 	try
 	{
-		evmAssemblyStack.parseAndAnalyze(m_reader.fileName().filename().string(), m_source);
+		evmAssemblyStack.parseAndAnalyze(m_reader.fileName().filename().string(), assemblyJSON);
 	}
 	catch (AssemblyImportException const& _exception)
 	{
@@ -125,6 +146,8 @@ TestCase::TestResult EVMAssemblyTest::run(std::ostream& _stream, std::string con
 	soltestAssert(evmAssemblyStack.compilationSuccessful());
 
 	auto const produceOutput = [&](std::string const& _output) {
+		if (_output == "InputAssemblyJSON")
+			return assemblyJSON;
 		if (_output == "Assembly")
 			return evmAssemblyStack.assemblyString({{m_reader.fileName().filename().string(), m_source}});
 		if (_output == "Bytecode")

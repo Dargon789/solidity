@@ -31,14 +31,17 @@ namespace solidity::evmasm::test
 {
 
 /// Custom test case that runs the final part of the compiler pipeline (assembling into bytecode).
-/// Supports assembly JSON format produced by --asm-json.
+/// Supports two kinds of input (depending on file extension):
+/// - .asmjson: assembly JSON format produced by --asm-json.
+/// - .asm: plain assembly, a more limited but human-readable format that is internally converted
+///     to assembly JSON.
 ///
 /// Available settings:
 /// - EVMVersion: The range of EVM versions to run the test for. Inherited from EVMVersionRestrictedTestCase.
 /// - bytecodeFormat: The range of bytecode formats (EOF/legacy) to run the test for. Inherited from EVMVersionRestrictedTestCase.
 /// - outputs: List of outputs to include in the test. The order of values does NOT determine the order
-///     in which the outputs are printed. Supported outputs: Assembly, Bytecode, Opcodes, SourceMappings.
-///     The default is to print all outputs.
+///     in which the outputs are printed. Supported outputs: InputAssemblyJSON, Assembly, Bytecode, Opcodes, SourceMappings.
+///     The default is to print all outputs except InputAssemblyJSON.
 /// - optimizationPreset: Preset to load as the base optimizer settings.
 ///     One of: none, minimal, standard, full. The default is none.
 /// - optimizer.*: A set of detailed optimizer settings applied on top of the base preset.
@@ -61,8 +64,15 @@ public:
 	TestResult run(std::ostream& _stream, std::string const& _linePrefix = "", bool const _formatted = false) override;
 
 private:
+	enum class AssemblyFormat
+	{
+		JSON,
+		Plain,
+	};
+
 	static std::vector<std::string> const c_outputLabels;
 
+	AssemblyFormat m_assemblyFormat{};
 	std::string m_selectedOutputs;
 	evmasm::Assembly::OptimiserSettings m_optimizerSettings;
 };

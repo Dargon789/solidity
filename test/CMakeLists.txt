@@ -54,6 +54,8 @@ set(libevmasm_sources
     libevmasm/EVMAssemblyTest.cpp
     libevmasm/EVMAssemblyTest.h
     libevmasm/Optimiser.cpp
+    libevmasm/PlainAssemblyParser.cpp
+    libevmasm/PlainAssemblyParser.h
 )
 detect_stray_source_files("${libevmasm_sources}" "libevmasm/")
 
