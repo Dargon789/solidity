@@ -80,7 +80,6 @@ void BMC::analyze(SourceUnit const& _source, std::map<ASTNode const*, std::set<V
 	m_context.setSolver(m_interface.get());
 	m_context.reset();
 	m_context.setAssertionAccumulation(true);
-	m_variableUsage.setFunctionInlining(shouldInlineFunctionCall);
 	auto const& sources = sourceDependencies(_source);
 	createFreeConstants(sources);
 	createStateVariables(sources);
