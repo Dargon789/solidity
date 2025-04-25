@@ -37,12 +37,18 @@ namespace solidity::evmasm::test
 /// - A non-empty line represents a single assembly item.
 /// - The name of the item is the first thing on the line and may consist of one or more tokens.
 /// - One or more arguments follow the name.
+/// - Indentation determines assembly nesting level (4 spaces per level).
+/// - A new subassembly starts with '.sub' and contains all subsequent lines at a higher nesting level.
+///     The first line at the same or lower nesting level ends the subassembly.
+/// - Subassemblies can be nested to arbitrary depth.
+/// - The code of an assembly must be specified before its subassemblies.
 ///
 /// Supported items:
 /// - All instruction names.
 /// - PUSH <hex value>
 /// - PUSH [tag] <tagID>
 /// - tag <tagID>
+/// - .sub
 class PlainAssemblyParser
 {
 public:
@@ -57,9 +63,14 @@ protected:
 		size_t position;        ///< Position of the first character of the token within m_line.
 	};
 
+	Json parseAssembly(size_t _nestingLevel);
+	size_t parseNestingLevel() const;
+
 	Token const& currentToken() const;
 	Token const& nextToken() const;
 	bool hasMoreTokens() const { return m_tokenIndex + 1 < m_lineTokens.size(); }
+
+	std::string_view indentation() const;
 
 	bool advanceToken();
 	std::string_view expectArgument();

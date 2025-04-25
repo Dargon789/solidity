@@ -39,11 +39,16 @@ Json PlainAssemblyParser::parse(std::string _sourceName, std::string const& _sou
 {
 	m_sourceStream = std::istringstream(_source);
 	m_sourceName = std::move(_sourceName);
-	Json codeJSON = Json::array();
 	m_lineNumber = 0;
 
-	if (!m_line.has_value())
-		advanceLine();
+	advanceLine();
+	return parseAssembly(0);
+}
+
+Json PlainAssemblyParser::parseAssembly(size_t _nestingLevel)
+{
+	Json assemblyJSON = {{".code", Json::array()}};
+	Json& codeJSON = assemblyJSON[".code"];
 
 	while (m_line.has_value())
 	{
@@ -52,6 +57,25 @@ Json PlainAssemblyParser::parse(std::string _sourceName, std::string const& _sou
 			advanceLine();
 			continue;
 		}
+
+		size_t newLevel = parseNestingLevel();
+		if (newLevel > _nestingLevel)
+			BOOST_THROW_EXCEPTION(std::runtime_error(formatError("Indentation does not match the current subassembly nesting level.")));
+
+		if (newLevel < _nestingLevel)
+			return assemblyJSON;
+
+		if (currentToken().value == ".sub")
+		{
+			advanceLine();
+
+			std::string nextDataIndex = std::to_string(assemblyJSON[".data"].size());
+			assemblyJSON[".data"][nextDataIndex] = parseAssembly(_nestingLevel + 1);
+			continue;
+		}
+		else if (assemblyJSON.contains(".data"))
+			BOOST_THROW_EXCEPTION(std::runtime_error(formatError("The code of an assembly must be specified before its subassemblies.")));
+
 		if (c_instructions.contains(currentToken().value))
 		{
 			expectNoMoreArguments();
@@ -91,7 +115,21 @@ Json PlainAssemblyParser::parse(std::string _sourceName, std::string const& _sou
 
 		advanceLine();
 	}
-	return {{".code", codeJSON}};
+
+	return assemblyJSON;
+}
+
+size_t PlainAssemblyParser::parseNestingLevel() const
+{
+	std::string_view indentationString = indentation();
+
+	if (indentationString != std::string(indentationString.size(), ' '))
+		BOOST_THROW_EXCEPTION(std::runtime_error(formatError("Non-space characters used for indentation.")));
+
+	if (indentationString.size() % 4 != 0)
+		BOOST_THROW_EXCEPTION(std::runtime_error(formatError("Each indentation level must consist of 4 spaces.")));
+
+	return indentationString.size() / 4;
 }
 
 PlainAssemblyParser::Token const& PlainAssemblyParser::currentToken() const
@@ -104,6 +142,16 @@ PlainAssemblyParser::Token const& PlainAssemblyParser::nextToken() const
 {
 	soltestAssert(m_tokenIndex + 1 < m_lineTokens.size());
 	return m_lineTokens[m_tokenIndex + 1];
+}
+
+std::string_view PlainAssemblyParser::indentation() const
+{
+	soltestAssert(m_line.has_value());
+
+	if (m_lineTokens.empty())
+		return *m_line;
+
+	return std::string_view(*m_line).substr(0, m_lineTokens.at(0).position);
 }
 
 bool PlainAssemblyParser::advanceToken()
