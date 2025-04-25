@@ -28,8 +28,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/operators.hpp>
-
 
 namespace solidity::evmasm
 {
@@ -44,12 +42,12 @@ namespace solidity::langutil
  * A version specifier of the EVM we want to compile to.
  * Defaults to the latest version deployed on Ethereum Mainnet at the time of compiler release.
  */
-class EVMVersion:
-	boost::less_than_comparable<EVMVersion>,
-	boost::equality_comparable<EVMVersion>
+class EVMVersion
 {
 public:
 	EVMVersion() = default;
+
+	static EVMVersion current() { return {currentVersion}; }
 
 	static EVMVersion homestead() { return {Version::Homestead}; }
 	static EVMVersion tangerineWhistle() { return {Version::TangerineWhistle}; }
@@ -96,11 +94,10 @@ public:
 	static EVMVersion firstWithEOF() { return {Version::Osaka}; }
 
 	bool isExperimental() const {
-		return *this > EVMVersion{};
+		return m_version > currentVersion;
 	}
 
-	bool operator==(EVMVersion const& _other) const { return m_version == _other.m_version; }
-	bool operator<(EVMVersion const& _other) const { return m_version < _other.m_version; }
+	auto operator<=>(EVMVersion const&) const = default;
 
 	std::string name() const
 	{
@@ -164,10 +161,11 @@ private:
 		Prague,
 		Osaka,
 	};
+	static auto constexpr currentVersion = Version::Prague;
 
 	EVMVersion(Version _version): m_version(_version) {}
 
-	Version m_version = Version::Prague;
+	Version m_version = currentVersion;
 };
 
 }
