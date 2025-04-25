@@ -28,8 +28,6 @@
 
 #include <fmt/format.h>
 
-#include <sstream>
-
 using namespace std::string_literals;
 using namespace solidity;
 using namespace solidity::test;
@@ -39,15 +37,21 @@ using namespace solidity::langutil;
 
 Json PlainAssemblyParser::parse(std::string _sourceName, std::string const& _source)
 {
+	m_sourceStream = std::istringstream(_source);
 	m_sourceName = std::move(_sourceName);
 	Json codeJSON = Json::array();
-	std::istringstream sourceStream(_source);
-	while (getline(sourceStream, m_line))
-	{
-		advanceLine(m_line);
-		if (m_lineTokens.empty())
-			continue;
+	m_lineNumber = 0;
 
+	if (!m_line.has_value())
+		advanceLine();
+
+	while (m_line.has_value())
+	{
+		if (m_lineTokens.empty())
+		{
+			advanceLine();
+			continue;
+		}
 		if (c_instructions.contains(currentToken().value))
 		{
 			expectNoMoreArguments();
@@ -84,6 +88,8 @@ Json PlainAssemblyParser::parse(std::string _sourceName, std::string const& _sou
 		}
 		else
 			BOOST_THROW_EXCEPTION(std::runtime_error(formatError("Unknown instruction.")));
+
+		advanceLine();
 	}
 	return {{".code", codeJSON}};
 }
@@ -125,12 +131,20 @@ void PlainAssemblyParser::expectNoMoreArguments()
 		BOOST_THROW_EXCEPTION(std::runtime_error(formatError("Too many arguments.")));
 }
 
-void PlainAssemblyParser::advanceLine(std::string_view _line)
+bool PlainAssemblyParser::advanceLine()
 {
+	std::string line;
+	if (!getline(m_sourceStream, line))
+	{
+		m_line = std::nullopt;
+		return false;
+	}
+
 	++m_lineNumber;
-	m_line = _line;
-	m_lineTokens = tokenizeLine(m_line);
+	m_line = std::move(line);
+	m_lineTokens = tokenizeLine(*m_line);
 	m_tokenIndex = 0;
+	return true;
 }
 
 std::vector<PlainAssemblyParser::Token> PlainAssemblyParser::tokenizeLine(std::string_view _line)
@@ -162,6 +176,9 @@ std::vector<PlainAssemblyParser::Token> PlainAssemblyParser::tokenizeLine(std::s
 
 std::string PlainAssemblyParser::formatError(std::string_view _message) const
 {
+	soltestAssert(m_line.has_value());
+	soltestAssert(!m_lineTokens.empty());
+
 	std::string lineNumberString = std::to_string(m_lineNumber);
 	std::string padding(lineNumberString.size(), ' ');
 	std::string underline = std::string(currentToken().position, ' ') + std::string(currentToken().value.size(), '^');
@@ -174,7 +191,7 @@ std::string PlainAssemblyParser::formatError(std::string_view _message) const
 		_message,
 		padding, m_sourceName,
 		padding,
-		m_lineNumber, m_line,
+		m_lineNumber, *m_line,
 		padding, underline
 	);
 }

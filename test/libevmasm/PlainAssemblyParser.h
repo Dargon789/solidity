@@ -20,6 +20,7 @@
 
 #include <libsolutil/JSON.h>
 
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -63,17 +64,18 @@ protected:
 	bool advanceToken();
 	std::string_view expectArgument();
 	void expectNoMoreArguments();
-	void advanceLine(std::string_view _line);
+	bool advanceLine();
 
 	static std::vector<Token> tokenizeLine(std::string_view _line);
 	std::string formatError(std::string_view _message) const;
 
 private:
-	std::string m_sourceName;        ///< Name of the file the source comes from.
-	size_t m_lineNumber = 0;         ///< The number of the current line within the source, 1-based.
-	std::string m_line;              ///< The current line, unparsed.
-	std::vector<Token> m_lineTokens; ///< Decomposition of the current line into tokens (does not include comments).
-	size_t m_tokenIndex = 0;         ///< Points at a token within m_lineTokens.
+	std::istringstream m_sourceStream; ///< The source code being parsed.
+	std::string m_sourceName;          ///< Name of the file the source comes from.
+	size_t m_lineNumber = 0;           ///< The number of the current line within the source, 1-based.
+	std::optional<std::string> m_line; ///< The current line, unparsed.
+	std::vector<Token> m_lineTokens;   ///< Decomposition of the current line into tokens (does not include comments).
+	size_t m_tokenIndex = 0;           ///< Points at a token within m_lineTokens.
 };
 
 }
