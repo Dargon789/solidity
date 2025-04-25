@@ -48,6 +48,8 @@ namespace solidity::evmasm::test
 /// - PUSH <hex value>
 /// - PUSH [tag] <tagID>
 /// - tag <tagID>
+/// - PUSH [$] <subassemblyID>
+/// - PUSH #[$] <subassemblyID>
 /// - .sub
 class PlainAssemblyParser
 {

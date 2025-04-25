@@ -76,7 +76,7 @@ Json PlainAssemblyParser::parseAssembly(size_t _nestingLevel)
 		else if (assemblyJSON.contains(".data"))
 			BOOST_THROW_EXCEPTION(std::runtime_error(formatError("The code of an assembly must be specified before its subassemblies.")));
 
-		if (c_instructions.contains(currentToken().value))
+		if (c_instructions.contains(currentToken().value) || currentToken().value == "PUSHSIZE")
 		{
 			expectNoMoreArguments();
 			codeJSON.push_back({{"name", currentToken().value}});
@@ -89,6 +89,19 @@ Json PlainAssemblyParser::parseAssembly(size_t _nestingLevel)
 				std::string_view tagID = expectArgument();
 				expectNoMoreArguments();
 				codeJSON.push_back({{"name", "PUSH [tag]"}, {"value", tagID}});
+			}
+			else if (hasMoreTokens() && (nextToken().value == "[$]" || nextToken().value == "#[$]"))
+			{
+				std::string pushType = std::string(nextToken().value);
+				advanceToken();
+				std::string_view subassemblyID = expectArgument();
+				expectNoMoreArguments();
+
+				if (!subassemblyID.starts_with("0x"))
+					BOOST_THROW_EXCEPTION(std::runtime_error(formatError("The subassembly ID must be a hex number prefixed with '0x'.")));
+
+				subassemblyID.remove_prefix("0x"s.size());
+				codeJSON.push_back({{"name", "PUSH " + pushType}, {"value", subassemblyID}});
 			}
 			else
 			{
