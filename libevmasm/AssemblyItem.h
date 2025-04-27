@@ -85,7 +85,10 @@ public:
 		m_type(Operation),
 		m_instruction(_i),
 		m_debugData(std::move(_debugData))
-	{}
+	{
+		solAssert(_i != Instruction::SWAPN, "Construct via AssemblyItem::swapN");
+		solAssert(_i != Instruction::DUPN, "Construct via AssemblyItem::dupN");
+	}
 	AssemblyItem(AssemblyItemType _type, u256 _data = 0, langutil::DebugData::ConstPtr _debugData = langutil::DebugData::create()):
 		m_type(_type),
 		m_debugData(std::move(_debugData))
