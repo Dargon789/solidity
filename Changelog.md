@@ -4,6 +4,7 @@ Language Features:
 
 
 Compiler Features:
+* EVM: Set default EVM Version to `prague`.
 * NatSpec: Capture Natspec documentation of `enum` values in the AST.
 
 
