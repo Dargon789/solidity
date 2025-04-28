@@ -23,6 +23,7 @@
 
 #include <libsolutil/Assertions.h>
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -80,6 +81,14 @@ public:
 			cancun(),
 			prague(),
 			osaka(),
+		};
+	}
+
+	static auto constexpr allEOFVersions()
+	{
+		return std::array{
+			std::optional<uint8_t>(),
+			std::make_optional<uint8_t>(1)
 		};
 	}
 
