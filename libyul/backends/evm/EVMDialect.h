@@ -25,40 +25,21 @@
 #include <libyul/Scope.h>
 
 #include <libyul/backends/evm/AbstractAssembly.h>
-#include <libyul/ASTForward.h>
+#include <libyul/backends/evm/EVMBuiltins.h>
+
 #include <liblangutil/EVMVersion.h>
 
-#include <map>
+#include <array>
+#include <optional>
 #include <set>
+#include <unordered_map>
+#include <vector>
 
 namespace solidity::yul
 {
 
 struct FunctionCall;
 class Object;
-
-/**
- * Context used during code generation.
- */
-struct BuiltinContext
-{
-	Object const* currentObject = nullptr;
-	/// Mapping from named objects to abstract assembly sub IDs.
-	std::map<std::string, AbstractAssembly::SubID> subIDs;
-
-	std::map<Scope::Function const*, AbstractAssembly::FunctionID> functionIDs;
-};
-
-struct BuiltinFunctionForEVM: public BuiltinFunction
-{
-	std::optional<evmasm::Instruction> instruction;
-	/// Function to generate code for the given function call and append it to the abstract
-	/// assembly. Expects all non-literal arguments of the call to be on stack in reverse order
-	/// (i.e. right-most argument pushed first).
-	/// Expects the caller to set the source location.
-	std::function<void(FunctionCall const&, AbstractAssembly&, BuiltinContext&)> generateCode;
-};
-
 
 /**
  * Yul dialect for EVM as a backend.
@@ -108,18 +89,17 @@ public:
 
 	bool providesObjectAccess() const { return m_objectAccess; }
 
-	static SideEffects sideEffectsOfInstruction(evmasm::Instruction _instruction);
-
 	static size_t constexpr verbatimMaxInputSlots = 100;
 	static size_t constexpr verbatimMaxOutputSlots = 100;
 
 protected:
 	static bool constexpr isVerbatimHandle(BuiltinHandle const& _handle) { return _handle.id < verbatimIDOffset; }
 	static BuiltinFunctionForEVM createVerbatimFunctionFromHandle(BuiltinHandle const& _handle);
-	static BuiltinFunctionForEVM createVerbatimFunction(size_t _arguments, size_t _returnVariables);
 	BuiltinHandle verbatimFunction(size_t _arguments, size_t _returnVariables) const;
 
 	static size_t constexpr verbatimIDOffset = verbatimMaxInputSlots * verbatimMaxOutputSlots;
+
+	static EVMBuiltins const& allBuiltins();
 
 	bool const m_objectAccess;
 	langutil::EVMVersion const m_evmVersion;

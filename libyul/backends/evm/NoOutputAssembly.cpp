@@ -26,6 +26,7 @@
 
 #include <libevmasm/Instruction.h>
 
+#include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/iota.hpp>
 
 using namespace solidity;
@@ -208,44 +209,17 @@ NoOutputEVMDialect::NoOutputEVMDialect(EVMDialect const& _copyFrom):
 	EVMDialect(_copyFrom.evmVersion(), _copyFrom.eofVersion(), _copyFrom.providesObjectAccess())
 {
 	// save the modified functions here - note that this only has to be done once because we modify all of
-	// them in one go, later just reference pointers to this static vector
-	static std::vector<BuiltinFunctionForEVM> const noOutputBuiltins = []
+	// them in one go, later reference pointers to this static vector
+	static std::vector<BuiltinFunctionForEVM> noOutputBuiltins = defineNoOutputBuiltins();
+
+	m_functions.reserve(m_functions.size());
+	for (auto const& [index, builtinFunction]: m_functions | ranges::views::enumerate)
 	{
-		std::vector<BuiltinFunctionForEVM> modifiedBuiltins;
-		modifiedBuiltins.reserve(allBuiltins().functions().size());
-
-		for (auto const& [_, builtin]: allBuiltins().functions())
-		{
-			auto noOutputFunction = builtin;
-			modifyBuiltinToNoOutput(noOutputFunction);
-			modifiedBuiltins.push_back(std::move(noOutputFunction));
-		}
-
-		return modifiedBuiltins;
-	}();
-
-	m_functions = [&]
-	{
-		std::vector<BuiltinFunctionForEVM const*> result;
-		result.reserve(m_functions.size());
-		for (auto const* builtinFunction: m_functions)
-		{
-			if (builtinFunction)
-			{
-				auto it = noOutputBuiltins.find(builtinFunction);
-				if (it == noOutputBuiltins.end())
-				{
-					auto noOutputFunction = *builtinFunction;
-					modifyBuiltinToNoOutput(noOutputFunction);
-					it = noOutputBuiltins.emplace(builtinFunction, std::move(noOutputFunction)).first;
-				}
-				result.emplace_back(&it->second);
-			}
-			else
-				result.emplace_back(nullptr);
-		}
-		return result;
-	}();
+		if (builtinFunction)
+			m_functions.emplace_back(&noOutputBuiltins[index]);
+		else
+			m_functions.emplace_back(nullptr);
+	}
 }
 
 BuiltinFunctionForEVM const& NoOutputEVMDialect::builtin(BuiltinHandle const& _handle) const
@@ -261,4 +235,19 @@ BuiltinFunctionForEVM const& NoOutputEVMDialect::builtin(BuiltinHandle const& _h
 			modifyBuiltinToNoOutput(*builtin);
 		}
 	return EVMDialect::builtin(_handle);
+}
+
+std::vector<BuiltinFunctionForEVM> NoOutputEVMDialect::defineNoOutputBuiltins()
+{
+	std::vector<BuiltinFunctionForEVM> modifiedBuiltins;
+	modifiedBuiltins.reserve(allBuiltins().functions().size());
+
+	for (auto const& [_, builtin]: allBuiltins().functions())
+	{
+		auto noOutputFunction = builtin;
+		modifyBuiltinToNoOutput(noOutputFunction);
+		modifiedBuiltins.push_back(std::move(noOutputFunction));
+	}
+
+	return modifiedBuiltins;
 }
