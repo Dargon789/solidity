@@ -27,7 +27,6 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <vector>
 
 
 namespace solidity::evmasm
@@ -50,23 +49,23 @@ public:
 
 	static EVMVersion current() { return {currentVersion}; }
 
-	static EVMVersion homestead() { return {Version::Homestead}; }
-	static EVMVersion tangerineWhistle() { return {Version::TangerineWhistle}; }
-	static EVMVersion spuriousDragon() { return {Version::SpuriousDragon}; }
-	static EVMVersion byzantium() { return {Version::Byzantium}; }
-	static EVMVersion constantinople() { return {Version::Constantinople}; }
-	static EVMVersion petersburg() { return {Version::Petersburg}; }
-	static EVMVersion istanbul() { return {Version::Istanbul}; }
-	static EVMVersion berlin() { return {Version::Berlin}; }
-	static EVMVersion london() { return {Version::London}; }
-	static EVMVersion paris() { return {Version::Paris}; }
-	static EVMVersion shanghai() { return {Version::Shanghai}; }
-	static EVMVersion cancun() { return {Version::Cancun}; }
-	static EVMVersion prague() { return {Version::Prague}; }
-	static EVMVersion osaka() { return {Version::Osaka}; }
+	static EVMVersion constexpr homestead() { return {Version::Homestead}; }
+	static EVMVersion constexpr tangerineWhistle() { return {Version::TangerineWhistle}; }
+	static EVMVersion constexpr spuriousDragon() { return {Version::SpuriousDragon}; }
+	static EVMVersion constexpr byzantium() { return {Version::Byzantium}; }
+	static EVMVersion constexpr constantinople() { return {Version::Constantinople}; }
+	static EVMVersion constexpr petersburg() { return {Version::Petersburg}; }
+	static EVMVersion constexpr istanbul() { return {Version::Istanbul}; }
+	static EVMVersion constexpr berlin() { return {Version::Berlin}; }
+	static EVMVersion constexpr london() { return {Version::London}; }
+	static EVMVersion constexpr paris() { return {Version::Paris}; }
+	static EVMVersion constexpr shanghai() { return {Version::Shanghai}; }
+	static EVMVersion constexpr cancun() { return {Version::Cancun}; }
+	static EVMVersion constexpr prague() { return {Version::Prague}; }
+	static EVMVersion constexpr osaka() { return {Version::Osaka}; }
 
-	static std::vector<EVMVersion> allVersions() {
-		return {
+	static auto constexpr allVersions() {
+		return std::array{
 			homestead(),
 			tangerineWhistle(),
 			spuriousDragon(),
@@ -172,7 +171,7 @@ private:
 	};
 	static auto constexpr currentVersion = Version::Prague;
 
-	EVMVersion(Version _version): m_version(_version) {}
+	constexpr EVMVersion(Version _version): m_version(_version) {}
 
 	Version m_version = currentVersion;
 };
