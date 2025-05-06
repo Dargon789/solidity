@@ -105,10 +105,7 @@ function zeppelin_test
     force_hardhat_compiler_binary "$config_file" "$BINARY_TYPE" "$BINARY_PATH"
     force_hardhat_compiler_settings "$config_file" "$(first_word "$SELECTED_PRESETS")"
     npm install
-    # We require to install hardhat 2.20.0 due to support for evm version cancun, otherwise we get the following error:
-    # Invalid value {"blockGasLimit":10000000,"allowUnlimitedContractSize":true,"hardfork":"cancun"} for HardhatConfig.networks.hardhat - Expected a value of type HardhatNetworkConfig.
-    # See: https://github.com/NomicFoundation/hardhat/issues/4176
-    npm install hardhat@2.20.0
+    npm install hardhat
 
     replace_version_pragmas
     for preset in $SELECTED_PRESETS; do
