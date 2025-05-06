@@ -101,6 +101,10 @@ function zeppelin_test
     # Here only the testToInt(248) and testToInt(256) cases fail so change the loop range to skip them
     sed -i "s|range(8, 256, 8)\(.forEach(bits => testToInt(bits));\)|range(8, 240, 8)\1|" test/utils/math/SafeCast.test.js
 
+    # TODO: Remove when next hardhat version releases, the fix is already merged: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/5663
+    # Fails with ProviderError: Invalid transaction: GasFloorMoreThanGasLimit
+    sed -i "177s|+ 2_000n|+ 10_000n|" test/metatx/ERC2771Forwarder.test.js
+
     neutralize_package_json_hooks
     force_hardhat_compiler_binary "$config_file" "$BINARY_TYPE" "$BINARY_PATH"
     force_hardhat_compiler_settings "$config_file" "$(first_word "$SELECTED_PRESETS")"
