@@ -1,7 +1,4 @@
-### 0.8.30 (unreleased)
-
-Language Features:
-
+### 0.8.30 (2025-05-07)
 
 Compiler Features:
 * EVM: Set default EVM Version to `prague`.
