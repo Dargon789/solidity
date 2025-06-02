@@ -822,7 +822,7 @@ BOOST_AUTO_TEST_CASE(filename_with_colon)
 		"language": "Solidity",
 		"settings": {
 			"outputSelection": {
-				"http://github.com/ethereum/solidity/std/StandardToken.sol": {
+				"https://github.com/ethereum/solidity/blob/develop/test/compilationTests/gnosis/Tokens/StandardToken.sol": {
 					"A": [
 						"abi"
 					]
@@ -830,7 +830,7 @@ BOOST_AUTO_TEST_CASE(filename_with_colon)
 			}
 		},
 		"sources": {
-			"http://github.com/ethereum/solidity/std/StandardToken.sol": {
+			"https://github.com/ethereum/solidity/blob/develop/test/compilationTests/gnosis/Tokens/StandardToken.sol": {
 				"content": "contract A { }"
 			}
 		}
@@ -838,7 +838,7 @@ BOOST_AUTO_TEST_CASE(filename_with_colon)
 	)";
 	Json result = compile(input);
 	BOOST_CHECK(containsAtMostWarnings(result));
-	Json contract = getContractResult(result, "http://github.com/ethereum/solidity/std/StandardToken.sol", "A");
+	Json contract = getContractResult(result, "https://github.com/ethereum/solidity/blob/develop/test/compilationTests/gnosis/Tokens/StandardToken.sol", "A");
 	BOOST_CHECK(contract.is_object());
 	BOOST_CHECK(contract["abi"].is_array());
 	BOOST_CHECK_EQUAL(util::jsonCompactPrint(contract["abi"]), "[]");
