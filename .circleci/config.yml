@@ -952,6 +952,8 @@ jobs:
   chk_pylint:
     <<: *base_ubuntu2404_small
     steps:
+      - install_python3:
+          packages: pyyaml jsonschema pytest
       - checkout
       - run: pylint --version
       - run:
@@ -1535,6 +1537,19 @@ jobs:
             - reports/externalTests/
       - matrix_notify_failure_unless_pr
 
+  t_ethdebug_output_validity:
+    <<: *base_node_small
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - install_python3:
+            packages: pyyaml jsonschema pytest
+      - run:
+          name: Ethdebug validity tests
+          command: |
+            pytest test/ethdebugSchemaTests --solc-binary-path=/tmp/workspace/solc/solc-static-linux -v
+
   c_ext_benchmarks:
     <<: *base_node_small
     steps:
@@ -1927,6 +1942,9 @@ workflows:
       #- t_ext: *job_native_compile_ext_trident
       #- t_ext: *job_native_compile_ext_chainlink
       #- t_ext: *job_native_compile_ext_bleeps
+
+      - t_ethdebug_output_validity:
+          <<: *requires_b_ubu_static
 
       - c_ext_benchmarks:
           <<: *requires_nothing
