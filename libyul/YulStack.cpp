@@ -275,14 +275,14 @@ YulStack::assembleWithDeployed(std::optional<std::string_view> _deployName)
 			);
 		}
 		if (debugInfoSelection().ethdebug)
-			creationObject.ethdebug = evmasm::ethdebug::program(creationObject.assembly->name(), 0, creationObject.assembly.get(), *creationObject.bytecode.get());
+			creationObject.ethdebug = evmasm::ethdebug::program(creationObject.assembly->name(), 0, *creationObject.assembly, *creationObject.bytecode);
 
 		if (deployedAssembly)
 		{
 			deployedObject.bytecode = std::make_shared<evmasm::LinkerObject>(deployedAssembly->assemble());
 			deployedObject.assembly = deployedAssembly;
 			if (debugInfoSelection().ethdebug)
-				deployedObject.ethdebug = evmasm::ethdebug::program(deployedObject.assembly->name(), 0, deployedObject.assembly.get(), *deployedObject.bytecode.get());
+				deployedObject.ethdebug = evmasm::ethdebug::program(deployedObject.assembly->name(), 0, *deployedObject.assembly, *deployedObject.bytecode);
 			solAssert(deployedAssembly->codeSections().size() == 1);
 			deployedObject.sourceMappings = std::make_unique<std::string>(
 				evmasm::AssemblyItem::computeSourceMapping(

@@ -2,12 +2,10 @@
 
 Language Features:
 
-
 Compiler Features:
-
+* ethdebug: Experimental support for instructions and source locations under EOF.
 
 Bugfixes:
-
 
 ### 0.8.30 (2025-05-07)
 
