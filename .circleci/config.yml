@@ -127,7 +127,7 @@ commands:
             if [[ "<< parameters.packages >>" != "" ]]
             then
               echo "Installing additional packages..."
-              python3 -m pip install --user << parameters.packages >>
+              python3 -m pip install --user --break-system-packages << parameters.packages >>
             fi
 
   install_foundry:
