@@ -26,6 +26,7 @@
 
 #include <libevmasm/Instruction.h>
 
+#include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/iota.hpp>
 
 using namespace solidity;
@@ -207,9 +208,18 @@ void NoOutputAssembly::appendReturnContract(ContainerID)
 NoOutputEVMDialect::NoOutputEVMDialect(EVMDialect const& _copyFrom):
 	EVMDialect(_copyFrom.evmVersion(), _copyFrom.eofVersion(), _copyFrom.providesObjectAccess())
 {
-	for (auto& fun: m_functions)
-		if (fun)
-			modifyBuiltinToNoOutput(*fun);
+	// save the modified functions here - note that this only has to be done once because we modify all of
+	// them in one go, later reference pointers to this static vector
+	static std::vector<BuiltinFunctionForEVM> noOutputBuiltins = defineNoOutputBuiltins();
+
+	m_functions.reserve(m_functions.size());
+	for (auto const& [index, builtinFunction]: m_functions | ranges::views::enumerate)
+	{
+		if (builtinFunction)
+			m_functions.emplace_back(&noOutputBuiltins[index]);
+		else
+			m_functions.emplace_back(nullptr);
+	}
 }
 
 BuiltinFunctionForEVM const& NoOutputEVMDialect::builtin(BuiltinHandle const& _handle) const
@@ -225,4 +235,19 @@ BuiltinFunctionForEVM const& NoOutputEVMDialect::builtin(BuiltinHandle const& _h
 			modifyBuiltinToNoOutput(*builtin);
 		}
 	return EVMDialect::builtin(_handle);
+}
+
+std::vector<BuiltinFunctionForEVM> NoOutputEVMDialect::defineNoOutputBuiltins()
+{
+	std::vector<BuiltinFunctionForEVM> modifiedBuiltins;
+	modifiedBuiltins.reserve(allBuiltins().functions().size());
+
+	for (auto const& [_, builtin]: allBuiltins().functions())
+	{
+		auto noOutputFunction = builtin;
+		modifyBuiltinToNoOutput(noOutputFunction);
+		modifiedBuiltins.push_back(std::move(noOutputFunction));
+	}
+
+	return modifiedBuiltins;
 }
