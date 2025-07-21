@@ -212,13 +212,13 @@ NoOutputEVMDialect::NoOutputEVMDialect(EVMDialect const& _copyFrom):
 	// them in one go, later reference pointers to this static vector
 	static std::vector<BuiltinFunctionForEVM> noOutputBuiltins = defineNoOutputBuiltins();
 
-	m_functions.reserve(m_functions.size());
+	yulAssert(m_functions.size() == noOutputBuiltins.size(), "Function count mismatch.");
 	for (auto const& [index, builtinFunction]: m_functions | ranges::views::enumerate)
 	{
 		if (builtinFunction)
-			m_functions.emplace_back(&noOutputBuiltins[index]);
+			m_functions[index] = &noOutputBuiltins[index];
 		else
-			m_functions.emplace_back(nullptr);
+			m_functions[index] = nullptr;
 	}
 }
 
