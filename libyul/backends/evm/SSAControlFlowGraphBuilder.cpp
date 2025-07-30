@@ -355,6 +355,28 @@ void SSAControlFlowGraphBuilder::operator()(Switch const& _switch)
 	}
 	else
 	{
+		if (auto const* constantExpression = std::get_if<Literal>(_switch.expression.get()))
+		{
+			Case const* matchedCase = nullptr;
+			// select case that matches (or default if available)
+			for (auto const& switchCase: _switch.cases)
+			{
+				if (!switchCase.value)
+					matchedCase = &switchCase;
+				if (switchCase.value && switchCase.value->value.value() == constantExpression->value.value())
+				{
+					matchedCase = &switchCase;
+					break;
+				}
+			}
+			if (matchedCase)
+			{
+				// inject directly into the current block
+				(*this)(matchedCase->body);
+			}
+			return;
+		}
+
 		std::optional<BuiltinHandle> equalityBuiltinHandle = m_dialect.equalityFunctionHandle();
 		yulAssert(equalityBuiltinHandle);
 
