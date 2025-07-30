@@ -287,20 +287,33 @@ void SSAControlFlowGraphBuilder::operator()(FunctionDefinition const& _functionD
 
 void SSAControlFlowGraphBuilder::operator()(If const& _if)
 {
-	auto condition = std::visit(*this, *_if.condition);
-	auto ifBranch = m_graph.makeBlock(debugDataOf(_if.body));
-	auto afterIf = m_graph.makeBlock(debugDataOf(currentBlock()));
-	conditionalJump(
-		debugDataOf(_if),
-		condition,
-		ifBranch,
-		afterIf
-	);
-	sealBlock(ifBranch);
-	m_currentBlock = ifBranch;
-	(*this)(_if.body);
-	jump(debugDataOf(_if.body), afterIf);
-	sealBlock(afterIf);
+	std::optional<bool> constantCondition;
+	if (auto const* literalCondition = std::get_if<Literal>(_if.condition.get()))
+		constantCondition = literalCondition->value.value() != 0;
+	// deal with literal (constant) conditions explicitly
+	if (constantCondition)
+	{
+		if (*constantCondition)
+			// Always true - skip conditional, just execute if branch
+			(*this)(_if.body);
+	}
+	else
+	{
+		auto condition = std::visit(*this, *_if.condition);
+		auto ifBranch = m_graph.makeBlock(debugDataOf(_if.body));
+		auto afterIf = m_graph.makeBlock(debugDataOf(currentBlock()));
+		conditionalJump(
+			debugDataOf(_if),
+			condition,
+			ifBranch,
+			afterIf
+		);
+		sealBlock(ifBranch);
+		m_currentBlock = ifBranch;
+		(*this)(_if.body);
+		jump(debugDataOf(_if.body), afterIf);
+		sealBlock(afterIf);
+	}
 }
 
 void SSAControlFlowGraphBuilder::operator()(Switch const& _switch)
