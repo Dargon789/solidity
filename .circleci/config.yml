@@ -823,14 +823,14 @@ defaults:
       # NOTE: test suite disabled due to dependence on a specific version of Hardhat
       # which does not support shanghai EVM.
       compile_only: 1
-      image: cimg/node:20.19
+      image: cimg/node:lts
 
   - job_native_test_ext_uniswap: &job_native_test_ext_uniswap
       <<: *requires_b_ubu_static
       name: t_native_test_ext_uniswap
       project: uniswap
       binary_type: native
-      image: cimg/node:18.16
+      image: cimg/node:lts
       resource_class: medium # Tests run out of memory on a smaller machine
 
   - job_native_test_ext_prb_math: &job_native_test_ext_prb_math
@@ -848,7 +848,7 @@ defaults:
       name: t_native_test_ext_elementfi
       project: elementfi
       binary_type: native
-      image: cimg/node:18.16
+      image: cimg/node:lts
       resource_class: medium
 
   - job_native_test_ext_brink: &job_native_test_ext_brink
@@ -856,7 +856,7 @@ defaults:
       name: t_native_test_ext_brink
       project: brink
       binary_type: native
-      image: cimg/node:18.16
+      image: cimg/node:lts
 
   - job_native_compile_ext_chainlink: &job_native_compile_ext_chainlink
       <<: *requires_b_ubu_static
@@ -876,7 +876,7 @@ defaults:
       binary_type: native
       # NOTE: test suite disabled due to constant failures.
       compile_only: 1
-      image: cimg/node:20.19
+      image: cimg/node:lts
 
   - job_b_ubu_asan_clang: &job_b_ubu_asan_clang
       <<: *on_all_tags_and_branches
