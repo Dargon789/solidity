@@ -380,11 +380,11 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - osx-dependencies-cached-{{ arch }}-{{ checksum ".circleci/osx_install_dependencies.sh" }}
+            - macos-dependencies-cached-{{ arch }}-{{ checksum ".circleci/osx_install_dependencies.sh" }}
       - run:
           name: Installing dependencies / Restoring dependency cache
           command: |
-            if [[ -f ~/osx-dependencies-cached ]]; then
+            if [[ -f ~/macos-dependencies-cached ]]; then
               echo "Dependency flag exists. Removing /usr/local/, /opt/homebrew/, and /opt/boost. These directories will be restored from cache."
 
               # CircleCI is providing the circleci cli tools via some kind of symlink magic.
@@ -414,7 +414,7 @@ commands:
             fi
       - restore_cache:
           keys:
-            - osx-dependencies-{{ arch }}-{{ checksum ".circleci/osx_install_dependencies.sh" }}
+            - macos-dependencies-{{ arch }}-{{ checksum ".circleci/osx_install_dependencies.sh" }}
       # DO NOT EDIT between here and save_cache, but rather edit ./circleci/osx_install_dependencies.sh
       # WARNING! If you do edit anything here instead, remember to invalidate the cache manually.
       - run:
@@ -422,18 +422,18 @@ commands:
           command: .circleci/osx_install_dependencies.sh
       - run:
           name: Mark dependencies as cached
-          command: touch ~/osx-dependencies-cached
+          command: touch ~/macos-dependencies-cached
       - save_cache:
-          key: osx-dependencies-{{ arch }}-{{ checksum ".circleci/osx_install_dependencies.sh" }}
+          key: macos-dependencies-{{ arch }}-{{ checksum ".circleci/osx_install_dependencies.sh" }}
           paths:
             # Homebrew is installed in /usr/local on intel macs, but in /opt/homebrew on apple silicon.
             - /usr/local
             - /opt/homebrew
             - /opt/boost
       - save_cache:
-          key: osx-dependencies-cached-{{ arch }}-{{ checksum ".circleci/osx_install_dependencies.sh" }}
+          key: macos-dependencies-cached-{{ arch }}-{{ checksum ".circleci/osx_install_dependencies.sh" }}
           paths:
-            - ~/osx-dependencies-cached
+            - ~/macos-dependencies-cached
 
 defaults:
 
