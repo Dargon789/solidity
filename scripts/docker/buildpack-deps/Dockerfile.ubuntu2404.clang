@@ -22,7 +22,7 @@
 # (c) 2016-2024 solidity contributors.
 #------------------------------------------------------------------------------
 FROM buildpack-deps:noble AS base
-LABEL version="4"
+LABEL version="5"
 
 ARG DEBIAN_FRONTEND=noninteractive
 
