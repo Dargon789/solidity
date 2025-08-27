@@ -112,7 +112,7 @@ then
   # evmone
   evmone_version="0.13.0"
   evmone_package="evmone-${evmone_version}-darwin-arm64.tar.gz"
-  wget "https://github.com/ethereum/evmone/releases/download/v${evmone_version}/${evmone_package}"
+  wget "https://github.com/ipsilon/evmone/releases/download/v${evmone_version}/${evmone_package}"
   validate_checksum "$evmone_package" 49fe6cc35e0e13c48ca2f29a6b85a47f7b25dcd427e14254000d3bc29cddf2a6
   sudo tar xzpf "$evmone_package" -C /usr/local
   rm "$evmone_package"

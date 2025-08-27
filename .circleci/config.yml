@@ -745,7 +745,7 @@ defaults:
   # Parameterized Job Templates
 
   # Separate compile-only runs of those external tests where a full run takes much longer.
-  # Also see https://github.com/ethereum/solidity/pull/14234 for why we excluded those
+  # Also see https://github.com/argotorg/solidity/pull/14234 for why we excluded those
   # external tests from the nightly jobs.
   - job_ems_compile_ext_colony: &job_ems_compile_ext_colony
       <<: *requires_b_ems
@@ -1083,7 +1083,7 @@ jobs:
   b_ubu_static:
     # We temporarily keep building static release binaries on ubuntu 20.04
     # to avoid glibc incompatibilities.
-    # See: https://github.com/ethereum/solidity/issues/13954
+    # See: https://github.com/argotorg/solidity/issues/13954
     # On large runs 2x faster than on medium. 3x on xlarge.
     <<: *base_ubuntu2404_xlarge
     environment:
@@ -1140,7 +1140,7 @@ jobs:
       - run:
           name: Regression tests
           command: |
-            git clone https://github.com/ethereum/solidity-fuzzing-corpus /tmp/solidity-fuzzing-corpus
+            git clone https://github.com/argotorg/solidity-fuzzing-corpus /tmp/solidity-fuzzing-corpus
             mkdir -p test_results
             scripts/regressions.py -o test_results
       - store_test_results:
@@ -1333,7 +1333,7 @@ jobs:
       <<: *base_ubuntu2404_env
       ASAN_OPTIONS: check_initialization_order=true:detect_stack_use_after_return=true:strict_init_order=true:strict_string_checks=true:detect_invalid_pointer_pairs=2
       # Suppress CLN memory leak.
-      # See: https://github.com/ethereum/solidity/issues/13891 for details.
+      # See: https://github.com/argotorg/solidity/issues/13891 for details.
       LSAN_OPTIONS: suppressions=/root/project/.circleci/cln-asan.supp:print_suppressions=0
     steps:
       - cmdline_tests
@@ -1349,7 +1349,7 @@ jobs:
       SOLTEST_FLAGS: --no-smt
       ASAN_OPTIONS: check_initialization_order=true:detect_stack_use_after_return=true:strict_init_order=true:strict_string_checks=true:detect_invalid_pointer_pairs=2
       # Suppress CLN memory leak.
-      # See: https://github.com/ethereum/solidity/issues/13891 for details.
+      # See: https://github.com/argotorg/solidity/issues/13891 for details.
       LSAN_OPTIONS: suppressions=/root/project/.circleci/cln-asan.supp
     steps:
       - soltest
