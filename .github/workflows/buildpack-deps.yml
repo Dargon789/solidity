@@ -29,7 +29,7 @@ jobs:
         image_variant: [emscripten, ubuntu.clang.ossfuzz, ubuntu2004, ubuntu2204, ubuntu2404, ubuntu2404.clang]
 
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -41,6 +41,6 @@ jobs:
 
       - name: comment PR
         if: "env.DOCKER_IMAGE"
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
+        uses: thollander/actions-comment-pull-request@v3
         with:
           message: "`${{ env.DOCKER_IMAGE }} ${{ env.DOCKER_REPO_DIGEST }}`."
